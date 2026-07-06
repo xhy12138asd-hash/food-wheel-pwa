@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Edit3, Trash2 } from "lucide-react";
 import NutritionCard from "../components/NutritionCard";
 import QuickIntakeForm from "../components/QuickIntakeForm";
 import type { Food, IntakeRecord } from "../types";
@@ -12,12 +12,22 @@ interface StatsPageProps {
   dateKey: string;
   isNetworkTimeSynced: boolean;
   onAddRecord: (record: IntakeRecord) => void;
+  onUpdateRecord: (record: IntakeRecord) => void;
   onDeleteRecord: (id: string) => void;
   onClearToday: () => void;
 }
 
-export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAddRecord, onDeleteRecord, onClearToday }: StatsPageProps) {
+export default function StatsPage({
+  records,
+  dateKey,
+  isNetworkTimeSynced,
+  onAddRecord,
+  onUpdateRecord,
+  onDeleteRecord,
+  onClearToday,
+}: StatsPageProps) {
   const [selectedDate, setSelectedDate] = useState(dateKey);
+  const [editingRecord, setEditingRecord] = useState<IntakeRecord | null>(null);
   const recordDates = useMemo(() => {
     return Array.from(new Set([dateKey, ...records.map((record) => record.date).filter(Boolean)])).sort((a, b) =>
       b.localeCompare(a)
@@ -41,6 +51,16 @@ export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAdd
       createdAt: new Date().toISOString(),
       food,
     });
+  }
+
+  function saveEditingFood(food: Food) {
+    if (!editingRecord) return;
+    onUpdateRecord({
+      ...editingRecord,
+      foodId: food.id,
+      food,
+    });
+    setEditingRecord(null);
   }
 
   return (
@@ -103,12 +123,8 @@ export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAdd
         <NutritionCard nutrition={totals} />
       </section>
 
-      <section className="rounded-lg bg-white p-4 shadow-soft">
-        <h2 className="mb-4 text-lg font-black text-ink">直接添加今日摄入</h2>
-        <QuickIntakeForm onSubmit={addQuickFood} />
-      </section>
-
       <section className="space-y-3">
+        <h2 className="text-lg font-black text-ink">摄入记录</h2>
         {selectedRecords.length === 0 && (
           <div className="rounded-lg bg-white p-5 text-center font-semibold text-slate-500 shadow-soft">
             {isViewingToday ? "今天还没有记录" : "这一天没有记录"}
@@ -123,17 +139,60 @@ export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAdd
                 {formatTime(record.createdAt)} · {record.food.calories} kcal · 蛋白质 {record.food.protein}g
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => onDeleteRecord(record.id)}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-rose-50 text-rose-600"
-              aria-label="删除记录"
-            >
-              <Trash2 size={18} />
-            </button>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingRecord(record)}
+                className="flex min-h-10 items-center gap-1 rounded-lg bg-slate-100 px-3 text-sm font-bold text-slate-700"
+                aria-label="编辑记录"
+              >
+                <Edit3 size={18} />
+                改
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteRecord(record.id)}
+                className="flex min-h-10 items-center gap-1 rounded-lg bg-rose-50 px-3 text-sm font-bold text-rose-600"
+                aria-label="删除记录"
+              >
+                <Trash2 size={18} />
+                删
+              </button>
+            </div>
           </article>
         ))}
       </section>
+
+      <section className="rounded-lg bg-white p-4 shadow-soft">
+        <h2 className="mb-4 text-lg font-black text-ink">直接添加今日摄入</h2>
+        <QuickIntakeForm onSubmit={addQuickFood} />
+      </section>
+
+      {editingRecord && (
+        <div className="fixed inset-0 z-50 flex items-end bg-slate-950/45 px-4 pb-4 backdrop-blur-sm">
+          <section className="mx-auto max-h-[88vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-soft scroll-clean">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-leaf">编辑记录</p>
+                <h2 className="mt-1 text-2xl font-black text-ink">{editingRecord.date}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingRecord(null)}
+                className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-600"
+              >
+                关闭
+              </button>
+            </div>
+            <QuickIntakeForm
+              initialFood={editingRecord.food}
+              onSubmit={saveEditingFood}
+              submitLabel="保存记录"
+              resetOnSubmit={false}
+            />
+          </section>
+        </div>
+      )}
     </main>
   );
 }

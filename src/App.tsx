@@ -55,6 +55,12 @@ export default function App() {
               records: [record, ...current.records],
             }))
           }
+          onUpdateRecord={(record: IntakeRecord) =>
+            updateData((current) => ({
+              ...current,
+              records: current.records.map((item) => (item.id === record.id ? record : item)),
+            }))
+          }
           onDeleteRecord={(id: string) =>
             updateData((current) => ({
               ...current,

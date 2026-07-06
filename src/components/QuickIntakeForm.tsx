@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { Food } from "../types";
 import { createId } from "../utils/storage";
 
@@ -17,11 +17,28 @@ const emptyDraft: QuickFoodDraft = {
 
 interface QuickIntakeFormProps {
   onSubmit: (food: Food) => void;
+  initialFood?: Food | null;
   submitLabel?: string;
+  resetOnSubmit?: boolean;
 }
 
-export default function QuickIntakeForm({ onSubmit, submitLabel = "加入今日摄入" }: QuickIntakeFormProps) {
+export default function QuickIntakeForm({
+  onSubmit,
+  initialFood = null,
+  submitLabel = "加入今日摄入",
+  resetOnSubmit = true,
+}: QuickIntakeFormProps) {
   const [draft, setDraft] = useState<QuickFoodDraft>(emptyDraft);
+
+  useEffect(() => {
+    if (!initialFood) {
+      setDraft(emptyDraft);
+      return;
+    }
+
+    const { id: _id, ...foodDraft } = initialFood;
+    setDraft(foodDraft);
+  }, [initialFood]);
 
   function update<K extends keyof QuickFoodDraft>(key: K, value: QuickFoodDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -34,12 +51,12 @@ export default function QuickIntakeForm({ onSubmit, submitLabel = "加入今日�
 
     onSubmit({
       ...draft,
-      id: createId("quick-food"),
+      id: initialFood?.id || createId("quick-food"),
       name,
       category: draft.category.trim() || "直接记录",
       note: draft.note.trim(),
     });
-    setDraft(emptyDraft);
+    if (resetOnSubmit) setDraft(emptyDraft);
   }
 
   return (
