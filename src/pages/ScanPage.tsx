@@ -1,9 +1,9 @@
-import { Camera, KeyRound, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Camera, Sparkles } from "lucide-react";
+import { useState } from "react";
 import NutritionCard from "../components/NutritionCard";
 import type { Food, IntakeRecord } from "../types";
 import { createId } from "../utils/storage";
-import { fileToDataUrl, loadZhipuApiKey, recognizeFoodFromImage, saveZhipuApiKey } from "../utils/zhipu";
+import { fileToDataUrl, getZhipuApiKey, recognizeFoodFromImage } from "../utils/zhipu";
 
 interface ScanPageProps {
   dateKey: string;
@@ -11,15 +11,10 @@ interface ScanPageProps {
 }
 
 export default function ScanPage({ dateKey, onAddRecord }: ScanPageProps) {
-  const [apiKey, setApiKey] = useState("");
   const [imageDataUrl, setImageDataUrl] = useState("");
   const [resultFood, setResultFood] = useState<Food | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    setApiKey(loadZhipuApiKey());
-  }, []);
 
   async function chooseImage(file: File | undefined) {
     if (!file) return;
@@ -29,21 +24,15 @@ export default function ScanPage({ dateKey, onAddRecord }: ScanPageProps) {
   }
 
   async function recognize() {
-    const key = apiKey.trim();
-    if (!key) {
-      setMessage("请先填写智谱 API Key");
-      return;
-    }
     if (!imageDataUrl) {
       setMessage("请先选择或拍摄食物图片");
       return;
     }
 
-    saveZhipuApiKey(key);
     setIsLoading(true);
     setMessage("");
     try {
-      const food = await recognizeFoodFromImage(key, imageDataUrl);
+      const food = await recognizeFoodFromImage(getZhipuApiKey(), imageDataUrl);
       setResultFood({
         ...food,
         id: createId("ai-food"),
@@ -75,25 +64,8 @@ export default function ScanPage({ dateKey, onAddRecord }: ScanPageProps) {
       <header>
         <p className="text-sm font-bold text-leaf">图片识别</p>
         <h1 className="mt-1 text-2xl font-black text-ink">拍一下，估算营养</h1>
-        <p className="mt-1 text-xs font-semibold text-slate-400">识别结果为估算值，加入前可以先核对</p>
+        <p className="mt-1 text-xs font-semibold text-slate-400">已内置识别接口，结果加入前可以先核对</p>
       </header>
-
-      <section className="rounded-lg bg-white p-4 shadow-soft">
-        <label className="grid gap-1.5">
-          <span className="flex items-center gap-2 text-sm font-bold text-slate-700">
-            <KeyRound size={16} />
-            智谱 API Key
-          </span>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(event) => setApiKey(event.target.value)}
-            onBlur={() => saveZhipuApiKey(apiKey)}
-            placeholder="只保存在本机浏览器"
-            className="min-h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-base outline-none focus:border-leaf focus:bg-white"
-          />
-        </label>
-      </section>
 
       <section className="rounded-lg bg-white p-4 shadow-soft">
         <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 px-4 text-center active:bg-mint">

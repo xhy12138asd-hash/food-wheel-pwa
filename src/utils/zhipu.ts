@@ -1,20 +1,11 @@
 import type { Food } from "../types";
 
-const API_KEY_STORAGE = "eat-wheel-zhipu-api-key-v1";
 const BIGMODEL_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
 const MODEL = "glm-4.6v";
+const BUILT_IN_API_KEY = "0c8183d86e6b4e8fbc1287a55ae83d7c.Vzz8w3rg6SNW4o9S";
 
-export function loadZhipuApiKey(): string {
-  return localStorage.getItem(API_KEY_STORAGE) || "";
-}
-
-export function saveZhipuApiKey(apiKey: string): void {
-  const trimmed = apiKey.trim();
-  if (trimmed) {
-    localStorage.setItem(API_KEY_STORAGE, trimmed);
-  } else {
-    localStorage.removeItem(API_KEY_STORAGE);
-  }
+export function getZhipuApiKey(): string {
+  return BUILT_IN_API_KEY;
 }
 
 export async function fileToDataUrl(file: File): Promise<string> {
