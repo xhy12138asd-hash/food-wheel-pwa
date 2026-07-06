@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import NutritionCard from "../components/NutritionCard";
 import QuickIntakeForm from "../components/QuickIntakeForm";
@@ -16,8 +17,21 @@ interface StatsPageProps {
 }
 
 export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAddRecord, onDeleteRecord, onClearToday }: StatsPageProps) {
+  const [selectedDate, setSelectedDate] = useState(dateKey);
+  const recordDates = useMemo(() => {
+    return Array.from(new Set([dateKey, ...records.map((record) => record.date).filter(Boolean)])).sort((a, b) =>
+      b.localeCompare(a)
+    );
+  }, [dateKey, records]);
+
+  useEffect(() => {
+    setSelectedDate((current) => current || dateKey);
+  }, [dateKey]);
+
   const todayRecords = records.filter((record) => record.date === dateKey);
-  const totals = sumFoods(todayRecords);
+  const selectedRecords = records.filter((record) => record.date === selectedDate);
+  const totals = sumFoods(selectedRecords);
+  const isViewingToday = selectedDate === dateKey;
 
   function addQuickFood(food: Food) {
     onAddRecord({
@@ -33,8 +47,8 @@ export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAdd
     <main className="space-y-4">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-leaf">今日统计</p>
-          <h1 className="mt-1 text-2xl font-black text-ink">{dateKey}</h1>
+          <p className="text-sm font-bold text-leaf">{isViewingToday ? "今日统计" : "历史记录"}</p>
+          <h1 className="mt-1 text-2xl font-black text-ink">{selectedDate}</h1>
           <p className="mt-1 text-xs font-semibold text-slate-400">
             {isNetworkTimeSynced ? "网络时间已同步" : "正在使用本机时间"}
           </p>
@@ -50,7 +64,42 @@ export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAdd
       </header>
 
       <section className="rounded-lg bg-white p-4 shadow-soft">
-        <h2 className="mb-3 text-lg font-black text-ink">今日总计</h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-black text-ink">选择日期</h2>
+          {!isViewingToday && (
+            <button
+              type="button"
+              onClick={() => setSelectedDate(dateKey)}
+              className="rounded-lg bg-mint px-3 py-2 text-sm font-bold text-leaf"
+            >
+              回到今天
+            </button>
+          )}
+        </div>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value || dateKey)}
+          className="min-h-12 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-base font-bold text-ink outline-none focus:border-leaf focus:bg-white"
+        />
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scroll-clean">
+          {recordDates.map((recordDate) => (
+            <button
+              key={recordDate}
+              type="button"
+              onClick={() => setSelectedDate(recordDate)}
+              className={`min-h-10 shrink-0 rounded-lg px-3 text-sm font-bold ${
+                selectedDate === recordDate ? "bg-ink text-white" : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {recordDate === dateKey ? "今天" : recordDate.slice(5)}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-lg bg-white p-4 shadow-soft">
+        <h2 className="mb-3 text-lg font-black text-ink">{isViewingToday ? "今日总计" : "当日总计"}</h2>
         <NutritionCard nutrition={totals} />
       </section>
 
@@ -60,11 +109,13 @@ export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onAdd
       </section>
 
       <section className="space-y-3">
-        {todayRecords.length === 0 && (
-          <div className="rounded-lg bg-white p-5 text-center font-semibold text-slate-500 shadow-soft">今天还没有记录</div>
+        {selectedRecords.length === 0 && (
+          <div className="rounded-lg bg-white p-5 text-center font-semibold text-slate-500 shadow-soft">
+            {isViewingToday ? "今天还没有记录" : "这一天没有记录"}
+          </div>
         )}
 
-        {todayRecords.map((record) => (
+        {selectedRecords.map((record) => (
           <article key={record.id} className="flex items-center justify-between gap-3 rounded-lg bg-white p-4 shadow-soft">
             <div className="min-w-0">
               <h2 className="truncate text-base font-black text-ink">{record.food.name}</h2>
