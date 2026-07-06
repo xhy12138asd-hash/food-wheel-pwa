@@ -4,19 +4,20 @@ import ProgressCard from "../components/ProgressCard";
 import SpinWheel from "../components/SpinWheel";
 import type { Food, IntakeRecord, Settings } from "../types";
 import { createId } from "../utils/storage";
-import { todayKey } from "../utils/date";
 import { sumFoods } from "../utils/nutrition";
 
 interface WheelPageProps {
   foods: Food[];
   records: IntakeRecord[];
   settings: Settings;
+  dateKey: string;
+  isNetworkTimeSynced: boolean;
   onAddRecord: (record: IntakeRecord) => void;
 }
 
-export default function WheelPage({ foods, records, settings, onAddRecord }: WheelPageProps) {
+export default function WheelPage({ foods, records, settings, dateKey, isNetworkTimeSynced, onAddRecord }: WheelPageProps) {
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
-  const todayRecords = useMemo(() => records.filter((record) => record.date === todayKey()), [records]);
+  const todayRecords = useMemo(() => records.filter((record) => record.date === dateKey), [dateKey, records]);
   const totals = useMemo(() => sumFoods(todayRecords), [todayRecords]);
 
   function addSelectedFood() {
@@ -24,7 +25,7 @@ export default function WheelPage({ foods, records, settings, onAddRecord }: Whe
     onAddRecord({
       id: createId("record"),
       foodId: selectedFood.id,
-      date: todayKey(),
+      date: dateKey,
       createdAt: new Date().toISOString(),
       food: selectedFood,
     });
@@ -36,6 +37,9 @@ export default function WheelPage({ foods, records, settings, onAddRecord }: Whe
       <header>
         <p className="text-sm font-bold text-leaf">今天吃什么转盘</p>
         <h1 className="mt-1 text-2xl font-black text-ink">让今天这餐轻松一点</h1>
+        <p className="mt-1 text-xs font-semibold text-slate-400">
+          今日日期 {dateKey} · {isNetworkTimeSynced ? "网络时间已同步" : "正在使用本机时间"}
+        </p>
       </header>
 
       <ProgressCard totals={totals} settings={settings} />

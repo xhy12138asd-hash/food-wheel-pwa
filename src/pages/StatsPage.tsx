@@ -1,17 +1,19 @@
 import { Trash2 } from "lucide-react";
 import NutritionCard from "../components/NutritionCard";
 import type { IntakeRecord } from "../types";
-import { formatTime, todayKey } from "../utils/date";
+import { formatTime } from "../utils/date";
 import { sumFoods } from "../utils/nutrition";
 
 interface StatsPageProps {
   records: IntakeRecord[];
+  dateKey: string;
+  isNetworkTimeSynced: boolean;
   onDeleteRecord: (id: string) => void;
   onClearToday: () => void;
 }
 
-export default function StatsPage({ records, onDeleteRecord, onClearToday }: StatsPageProps) {
-  const todayRecords = records.filter((record) => record.date === todayKey());
+export default function StatsPage({ records, dateKey, isNetworkTimeSynced, onDeleteRecord, onClearToday }: StatsPageProps) {
+  const todayRecords = records.filter((record) => record.date === dateKey);
   const totals = sumFoods(todayRecords);
 
   return (
@@ -19,7 +21,10 @@ export default function StatsPage({ records, onDeleteRecord, onClearToday }: Sta
       <header className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-leaf">今日统计</p>
-          <h1 className="mt-1 text-2xl font-black text-ink">{todayKey()}</h1>
+          <h1 className="mt-1 text-2xl font-black text-ink">{dateKey}</h1>
+          <p className="mt-1 text-xs font-semibold text-slate-400">
+            {isNetworkTimeSynced ? "网络时间已同步" : "正在使用本机时间"}
+          </p>
         </div>
         <button
           type="button"

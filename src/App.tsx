@@ -5,12 +5,13 @@ import SettingsPage from "./pages/SettingsPage";
 import StatsPage from "./pages/StatsPage";
 import WheelPage from "./pages/WheelPage";
 import type { AppData, Food, IntakeRecord, PageKey, Settings } from "./types";
-import { todayKey } from "./utils/date";
+import { useNetworkTodayKey } from "./utils/networkTime";
 import { loadData, saveData } from "./utils/storage";
 
 export default function App() {
   const [activePage, setActivePage] = useState<PageKey>("wheel");
   const [data, setData] = useState<AppData>(() => loadData());
+  const { dateKey, isSynced } = useNetworkTodayKey();
 
   useEffect(() => {
     saveData(data);
@@ -45,6 +46,8 @@ export default function App() {
       return (
         <StatsPage
           records={data.records}
+          dateKey={dateKey}
+          isNetworkTimeSynced={isSynced}
           onDeleteRecord={(id: string) =>
             updateData((current) => ({
               ...current,
@@ -54,7 +57,7 @@ export default function App() {
           onClearToday={() =>
             updateData((current) => ({
               ...current,
-              records: current.records.filter((record) => record.date !== todayKey()),
+              records: current.records.filter((record) => record.date !== dateKey),
             }))
           }
         />
@@ -77,6 +80,8 @@ export default function App() {
         foods={data.foods}
         records={data.records}
         settings={data.settings}
+        dateKey={dateKey}
+        isNetworkTimeSynced={isSynced}
         onAddRecord={(record: IntakeRecord) =>
           updateData((current) => ({
             ...current,
@@ -85,7 +90,7 @@ export default function App() {
         }
       />
     );
-  }, [activePage, data]);
+  }, [activePage, data, dateKey, isSynced]);
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-md px-4 pb-28 pt-5">
