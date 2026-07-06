@@ -1,4 +1,4 @@
-const CACHE_NAME = "eat-wheel-v1";
+const CACHE_NAME = "eat-wheel-v2";
 
 self.addEventListener("install", (event) => {
   const scope = self.registration.scope;

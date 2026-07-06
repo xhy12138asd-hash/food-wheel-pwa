@@ -55,6 +55,7 @@ export default function SettingsPage({ data, settings, onUpdateSettings, onImpor
           <GoalInput label="热量目标 kcal" value={settings.calorieGoal} onChange={(value) => update("calorieGoal", value)} />
           <GoalInput label="蛋白质目标 g" value={settings.proteinGoal} onChange={(value) => update("proteinGoal", value)} />
           <GoalInput label="碳水目标 g" value={settings.carbsGoal} onChange={(value) => update("carbsGoal", value)} />
+          <GoalInput label="脂肪目标 g" value={settings.fatGoal} onChange={(value) => update("fatGoal", value)} />
           <GoalInput label="膳食纤维目标 g" value={settings.fiberGoal} onChange={(value) => update("fiberGoal", value)} />
         </div>
       </section>

@@ -27,6 +27,7 @@ export interface Settings {
   calorieGoal: number;
   proteinGoal: number;
   carbsGoal: number;
+  fatGoal: number;
   fiberGoal: number;
 }
 

@@ -53,6 +53,7 @@ export const defaultSettings: Settings = {
   calorieGoal: 2000,
   proteinGoal: 120,
   carbsGoal: 200,
+  fatGoal: 60,
   fiberGoal: 25,
 };
 

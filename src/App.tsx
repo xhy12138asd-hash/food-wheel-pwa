@@ -48,6 +48,12 @@ export default function App() {
           records={data.records}
           dateKey={dateKey}
           isNetworkTimeSynced={isSynced}
+          onAddRecord={(record: IntakeRecord) =>
+            updateData((current) => ({
+              ...current,
+              records: [record, ...current.records],
+            }))
+          }
           onDeleteRecord={(id: string) =>
             updateData((current) => ({
               ...current,
