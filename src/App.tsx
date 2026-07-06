@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import BottomNav from "./components/BottomNav";
 import FoodPage from "./pages/FoodPage";
+import ScanPage from "./pages/ScanPage";
 import SettingsPage from "./pages/SettingsPage";
 import StatsPage from "./pages/StatsPage";
 import WheelPage from "./pages/WheelPage";
@@ -77,6 +78,20 @@ export default function App() {
           settings={data.settings}
           onUpdateSettings={(settings: Settings) => updateData((current) => ({ ...current, settings }))}
           onImportData={setData}
+        />
+      );
+    }
+
+    if (activePage === "scan") {
+      return (
+        <ScanPage
+          dateKey={dateKey}
+          onAddRecord={(record: IntakeRecord) =>
+            updateData((current) => ({
+              ...current,
+              records: [record, ...current.records],
+            }))
+          }
         />
       );
     }

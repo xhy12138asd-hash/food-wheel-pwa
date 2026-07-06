@@ -1,4 +1,4 @@
-export type PageKey = "wheel" | "foods" | "stats" | "settings";
+export type PageKey = "wheel" | "foods" | "stats" | "scan" | "settings";
 
 export interface Nutrition {
   calories: number;
