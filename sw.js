@@ -1,4 +1,4 @@
-const CACHE_NAME = "eat-wheel-v2";
+const CACHE_NAME = "eat-wheel-v3";
 
 self.addEventListener("install", (event) => {
   const scope = self.registration.scope;
@@ -22,16 +22,12 @@ self.addEventListener("fetch", (event) => {
   const scope = self.registration.scope;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(scope));
-    })
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match(scope)))
   );
 });
