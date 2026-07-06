@@ -7,17 +7,39 @@ interface SpinWheelProps {
 }
 
 const colors = ["#86efac", "#fda4af", "#fde68a", "#93c5fd", "#c4b5fd", "#67e8f9", "#f9a8d4", "#bef264"];
+const CENTER = 100;
+const RADIUS = 96;
+const LABEL_RADIUS = 58;
 
 export default function SpinWheel({ foods, onResult }: SpinWheelProps) {
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  const gradient = useMemo(() => {
-    if (!foods.length) return "#e2e8f0";
+  const slices = useMemo(() => {
+    if (!foods.length) return [];
     const step = 360 / foods.length;
-    return `conic-gradient(from -90deg, ${foods
-      .map((_, index) => `${colors[index % colors.length]} ${index * step}deg ${(index + 1) * step}deg`)
-      .join(", ")})`;
+
+    return foods.map((food, index) => {
+      const start = index * step;
+      const end = (index + 1) * step;
+      const mid = start + step / 2;
+      const label = getLabelLines(food.name, foods.length);
+      const labelRadius = foods.length <= 4 ? LABEL_RADIUS : LABEL_RADIUS + 8;
+      const labelPoint = polarToCartesian(CENTER, CENTER, labelRadius, mid);
+      const labelWidth = Math.max(...label.map((line) => line.length)) * 8 + 8;
+      const labelHeight = label.length > 1 ? 22 : 13;
+
+      return {
+        food,
+        color: colors[index % colors.length],
+        path: describeSlice(CENTER, CENTER, RADIUS, start, end),
+        mid,
+        label,
+        labelPoint,
+        labelWidth,
+        labelHeight,
+      };
+    });
   }, [foods]);
 
   function spin() {
@@ -41,24 +63,38 @@ export default function SpinWheel({ foods, onResult }: SpinWheelProps) {
       <div className="relative mx-auto aspect-square w-full max-w-[19rem]">
         <div className="absolute left-1/2 top-0 z-20 h-0 w-0 -translate-x-1/2 -translate-y-1 border-x-[13px] border-t-[24px] border-x-transparent border-t-ink drop-shadow" />
         <div
-          className="relative h-full w-full rounded-full border-[10px] border-white shadow-[inset_0_0_0_1px_rgba(15,23,42,0.12),0_16px_40px_rgba(15,23,42,0.12)] transition-transform duration-[3000ms] ease-out"
-          style={{ background: gradient, transform: `rotate(${rotation}deg)` }}
+          className="relative h-full w-full rounded-full border-[10px] border-white bg-slate-200 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.12),0_16px_40px_rgba(15,23,42,0.12)] transition-transform duration-[3000ms] ease-out"
+          style={{ transform: `rotate(${rotation}deg)` }}
         >
-          <div className="absolute inset-[42%] rounded-full border-4 border-white bg-ink shadow-lg" />
-          {foods.map((food, index) => {
-            const angle = (360 / foods.length) * index + 360 / foods.length / 2;
-            return (
-              <div
-                key={food.id}
-                className="absolute left-1/2 top-1/2 origin-left text-[11px] font-black text-ink"
-                style={{ transform: `rotate(${angle}deg) translateX(4.2rem) rotate(90deg)`, width: "4.6rem" }}
-              >
-                <span className="block truncate rounded bg-white/55 px-1 py-0.5 text-center backdrop-blur-sm">
-                  {food.name}
-                </span>
-              </div>
-            );
-          })}
+          <svg className="h-full w-full overflow-visible rounded-full" viewBox="0 0 200 200" aria-hidden="true">
+            {slices.map((slice) => (
+              <g key={slice.food.id}>
+                <path d={slice.path} fill={slice.color} stroke="rgba(255,255,255,0.9)" strokeWidth="1.4" />
+                <rect
+                  x={slice.labelPoint.x - slice.labelWidth / 2}
+                  y={slice.labelPoint.y - slice.labelHeight / 2}
+                  width={slice.labelWidth}
+                  height={slice.labelHeight}
+                  rx="4"
+                  fill="rgba(255,255,255,0.66)"
+                />
+                <text
+                  x={slice.labelPoint.x}
+                  y={slice.labelPoint.y}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="select-none fill-ink text-[8.5px] font-black"
+                >
+                  {slice.label.map((line, lineIndex) => (
+                    <tspan key={line} x={slice.labelPoint.x} dy={lineIndex === 0 ? (slice.label.length > 1 ? "-0.55em" : "0") : "1.1em"}>
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
+              </g>
+            ))}
+            <circle cx="100" cy="100" r="21" fill="#1f2937" stroke="white" strokeWidth="5" />
+          </svg>
         </div>
       </div>
       <button
@@ -72,4 +108,34 @@ export default function SpinWheel({ foods, onResult }: SpinWheelProps) {
       {!foods.length && <p className="mt-3 text-center text-sm font-medium text-slate-500">请先去食物管理添加食物</p>}
     </section>
   );
+}
+
+function polarToCartesian(centerX: number, centerY: number, radius: number, angleDeg: number) {
+  const angleRad = ((angleDeg - 90) * Math.PI) / 180;
+  return {
+    x: centerX + radius * Math.cos(angleRad),
+    y: centerY + radius * Math.sin(angleRad),
+  };
+}
+
+function describeSlice(centerX: number, centerY: number, radius: number, startAngle: number, endAngle: number) {
+  const start = polarToCartesian(centerX, centerY, radius, endAngle);
+  const end = polarToCartesian(centerX, centerY, radius, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  return [
+    `M ${centerX} ${centerY}`,
+    `L ${start.x} ${start.y}`,
+    `A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`,
+    "Z",
+  ].join(" ");
+}
+
+function getLabelLines(name: string, itemCount: number) {
+  const compactName = name.trim() || "未命名";
+  const maxChars = itemCount <= 4 ? 8 : itemCount <= 7 ? 6 : 4;
+  const clipped = compactName.length > maxChars * 2 ? `${compactName.slice(0, maxChars * 2 - 1)}…` : compactName;
+
+  if (clipped.length <= maxChars) return [clipped];
+  return [clipped.slice(0, maxChars), clipped.slice(maxChars)];
 }
